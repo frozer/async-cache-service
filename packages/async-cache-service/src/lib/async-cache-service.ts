@@ -5,9 +5,10 @@ type CacheItem<T> = {
   isRefreshing?: boolean;
 }
 
-type CacheSubscriber<T> = [(value: T | undefined) => void, (e: Error) => void];
+type CacheSubscriber<T> = [(value: T | Error | undefined) => void, (e: Error) => void];
 
 export const CACHE_EXPIRE_MSEC = 1;
+export const ERROR_CACHE_RECORD_FLUSHED = 'CACHE_RECORD_FLUSHED';
 
 export class AsyncCacheService<T> {
   private cache: Map<string, CacheItem<T>> = new Map<string, CacheItem<T>>();
@@ -17,6 +18,12 @@ export class AsyncCacheService<T> {
 
   }
   
+  isExpired(key: string): boolean {
+    const item = this.cache.get(key) || {expire: 0};
+
+    return item?.expire < Date.now() && !item?.isRefreshing;
+  }
+
   async getItem(key: string): Promise<T | undefined> {
     const subscribers = this.subscribers.get(key) || [];
 
@@ -40,8 +47,8 @@ export class AsyncCacheService<T> {
 
   async flushItem(key: string): Promise<void> {
     this.cache.delete(key);
-    
-    await this.notifyErrorSubscribers(key, new Error('CACHE_RECORD_FLUSHED'));
+
+    this.notifyErrorSubscribers(key, ERROR_CACHE_RECORD_FLUSHED);
   }
 
   refreshItem(key: string) {
@@ -54,16 +61,19 @@ export class AsyncCacheService<T> {
   private async notifySuccessSubscribers(key: string): Promise<void> {
     const subscribers: CacheSubscriber<T>[] = this.subscribers.get(key) || [];
 
-    await Promise.all(subscribers.map(([resolve]) => {
+    subscribers.map(([resolve]) => {
       resolve(this.cache.get(key)?.value);
-    })).then(() => this.subscribers.set(key, []));
+    });
+    this.subscribers.set(key, []);
   }
 
-  private async notifyErrorSubscribers(key: string, e: Error): Promise<void> {
+  private async notifyErrorSubscribers(key: string, message: string): Promise<void> {
     const subscribers: CacheSubscriber<T>[] = this.subscribers.get(key) || [];
 
-    await Promise.all(subscribers.map(([,reject]) => {
-      reject(e);
-    })).then(() => this.subscribers.set(key, []));
+    subscribers.map(([, reject]) => {
+      reject(new Error(message));
+    });
+
+    this.subscribers.set(key, []);
   }
 }
