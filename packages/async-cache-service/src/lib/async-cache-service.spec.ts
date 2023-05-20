@@ -4,7 +4,7 @@ describe('AsyncCacheService', () => {
   let testInstance: AsyncCacheService<boolean>;
 
   beforeEach(() => {
-    testInstance = new AsyncCacheService<boolean>(600);
+    testInstance = new AsyncCacheService<boolean>(1000);
   });
   
   afterEach(() => {
@@ -20,7 +20,7 @@ describe('AsyncCacheService', () => {
   });
 
   it('#isExpire should return true for expired item', () => {
-    const fakeDate = new Date(Date.now() + 601);
+    const fakeDate = new Date(Date.now() + 1200);
 
     testInstance.setItem('test', true);
 
@@ -30,7 +30,7 @@ describe('AsyncCacheService', () => {
   });
 
   it('#isExpire should return false for expired but refreshing item', () => {
-    const fakeDate = new Date(Date.now() + 601);
+    const fakeDate = new Date(Date.now() + 1200);
 
     testInstance.setItem('test', true);
 
