@@ -1,11 +1,10 @@
+import { SubscriptionService } from "./subscription-service";
 
 type CacheItem<T> = {
   value?: T;
   expire: number;
   isRefreshing?: boolean;
 }
-
-type CacheSubscriber<T> = [(value: T | Error | undefined) => void, (e: Error) => void];
 
 export const CACHE_EXPIRE_MSEC = 1;
 export const ERROR_CACHE_RECORD_FLUSHED = 'CACHE_RECORD_FLUSHED';
@@ -20,11 +19,10 @@ export const ERROR_CACHE_RECORD_FLUSHED = 'CACHE_RECORD_FLUSHED';
  */
 export class AsyncCacheService<T> {
   private cache: Map<string, CacheItem<T>> = new Map<string, CacheItem<T>>();
-  private subscribers: Map<string, any> = new Map<string, CacheSubscriber<T>[]>();
 
-  constructor(private expireTimeMs: number = CACHE_EXPIRE_MSEC) {
-
-  }
+  constructor(
+    private expireTimeMs: number = CACHE_EXPIRE_MSEC,
+    private subscriptionService = new SubscriptionService<T>) {}
   
   /**
    * Check cache record expire status
@@ -45,11 +43,10 @@ export class AsyncCacheService<T> {
    * @returns 
    */
   async getItem(key: string): Promise<T | undefined> {
-    const subscribers = this.subscribers.get(key) || [];
 
     if (this.cache.get(key)?.isRefreshing) {
       return new Promise((resolve, reject) => {
-        this.subscribers.set(key, [...subscribers, [resolve, reject]]);
+        this.subscriptionService.addSubscriber(key, [resolve, reject]);
       })
     }
 
@@ -68,7 +65,7 @@ export class AsyncCacheService<T> {
       value
     });
 
-    this.notifySuccessSubscribers(key);
+    this.subscriptionService.notifySuccessSubscribers(key, this.cache.get(key)?.value);
   }
 
   /**
@@ -81,7 +78,7 @@ export class AsyncCacheService<T> {
   async flushItem(key: string): Promise<void> {
     this.cache.delete(key);
 
-    this.notifyErrorSubscribers(key, ERROR_CACHE_RECORD_FLUSHED);
+    this.subscriptionService.notifyErrorSubscribers(key, ERROR_CACHE_RECORD_FLUSHED);
   }
 
   /**
@@ -96,24 +93,5 @@ export class AsyncCacheService<T> {
       ...this.cache.get(key),
       isRefreshing: true
     } as CacheItem<T>);
-  }
-  
-  private async notifySuccessSubscribers(key: string): Promise<void> {
-    const subscribers: CacheSubscriber<T>[] = this.subscribers.get(key) || [];
-
-    subscribers.map(([resolve]) => {
-      resolve(this.cache.get(key)?.value);
-    });
-    this.subscribers.set(key, []);
-  }
-
-  private async notifyErrorSubscribers(key: string, message: string): Promise<void> {
-    const subscribers: CacheSubscriber<T>[] = this.subscribers.get(key) || [];
-
-    subscribers.map(([, reject]) => {
-      reject(new Error(message));
-    });
-
-    this.subscribers.set(key, []);
   }
 }
