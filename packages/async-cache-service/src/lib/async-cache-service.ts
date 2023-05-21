@@ -6,7 +6,7 @@ type CacheItem<T> = {
   isRefreshing?: boolean;
 }
 
-export const CACHE_EXPIRE_MSEC = 1;
+export type CacheExpiration = number | 'never';
 export const ERROR_CACHE_RECORD_FLUSHED = 'CACHE_RECORD_FLUSHED';
 
 /**
@@ -14,14 +14,18 @@ export const ERROR_CACHE_RECORD_FLUSHED = 'CACHE_RECORD_FLUSHED';
  * 
  * @example
  * ```ts
+ * // by default - the cache is never expire
  * const cacheService = new AsyncCacheService<string>();
+ * 
+ * // with 5min expiration
+ * const cacheService = new AsyncCacheService<string>(300_000);
  * ```
  */
 export class AsyncCacheService<T> {
   private cache: Map<string, CacheItem<T>> = new Map<string, CacheItem<T>>();
 
   constructor(
-    private expireTimeMs: number = CACHE_EXPIRE_MSEC,
+    private expireTimeMs: CacheExpiration = 'never',
     private subscriptionService = new SubscriptionService<T>) {}
   
   /**
@@ -63,11 +67,11 @@ export class AsyncCacheService<T> {
    */
   async setItem(key: string, value: T): Promise<void> {
     this.cache.set(key, {
-      expire: Date.now() + this.expireTimeMs,
+      expire: this.getExpire(),
       value
     });
 
-    this.subscriptionService.notifySuccessSubscribers(key, this.cache.get(key)?.value);
+    this.subscriptionService.notify(key, this.cache.get(key)?.value);
   }
 
   /**
@@ -80,7 +84,7 @@ export class AsyncCacheService<T> {
   async flushItem(key: string): Promise<void> {
     this.cache.delete(key);
 
-    this.subscriptionService.notifyErrorSubscribers(key, ERROR_CACHE_RECORD_FLUSHED);
+    this.subscriptionService.notify(key, new Error(ERROR_CACHE_RECORD_FLUSHED));
   }
 
   /**
@@ -95,5 +99,11 @@ export class AsyncCacheService<T> {
       ...this.cache.get(key),
       isRefreshing: true
     } as CacheItem<T>);
+  }
+
+  private getExpire(): number {
+    if (this.expireTimeMs === 'never') return Number.MAX_SAFE_INTEGER;
+
+    return Date.now() + this.expireTimeMs;
   }
 }

@@ -3,6 +3,7 @@ type CacheSubscriberErrorCb = (e: Error) => void;
 
 type CacheSubscriber<T> = [CacheSubscriberSuccessCb<T>, CacheSubscriberErrorCb];
 
+
 export class SubscriptionService<T> {
   private subscribers: Map<string, CacheSubscriber<T>[]> = new Map<string, CacheSubscriber<T>[]>();
 
@@ -11,21 +12,17 @@ export class SubscriptionService<T> {
     this.subscribers.set(key, [...subscribers, subscriber]);
   }
 
-  async notifySuccessSubscribers(key: string, value: T | undefined): Promise<void> {
+  notify(key: string, value: T | undefined | Error) {
     const subscribers: CacheSubscriber<T>[] = this.subscribers.get(key) || [];
 
-    for (const [resolve] of subscribers) {
-      this.handleSuccessCb(resolve)(value);
-    };
-
-    this.subscribers.set(key, []);
-  }
-
-  async notifyErrorSubscribers(key: string, message: string): Promise<void> {
-    const subscribers: CacheSubscriber<T>[] = this.subscribers.get(key) || [];
-
-    for (const [,reject] of subscribers) {
-      this.handleErrorCb(reject)(new Error(message));
+    if (value instanceof Error) {
+      for (const [,reject] of subscribers) {
+        this.handleErrorCb(reject)(value);
+      };
+    } else {
+      for (const [resolve] of subscribers) {
+        this.handleSuccessCb(resolve)(value);
+      };
     }
 
     this.subscribers.set(key, []);

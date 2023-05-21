@@ -1,4 +1,4 @@
-import { AsyncCacheService, ERROR_CACHE_RECORD_FLUSHED } from './async-cache-service';
+import { AsyncCacheService, ERROR_CACHE_RECORD_FLUSHED } from '../async-cache-service';
 
 describe('AsyncCacheService', () => {
   let testInstance: AsyncCacheService<boolean>;
@@ -27,6 +27,17 @@ describe('AsyncCacheService', () => {
     jest.useFakeTimers({now: fakeDate.getTime()});
 
     expect(testInstance.isExpired('test')).toBe(true);
+  });
+
+  it('#isExpire should return false if expireTimeMs not set', () => {
+    testInstance = new AsyncCacheService<boolean>();
+    const fakeDate = new Date(Date.now() + 1200);
+
+    testInstance.setItem('test', true);
+
+    jest.useFakeTimers({now: fakeDate.getTime()});
+
+    expect(testInstance.isExpired('test')).toBe(false);
   });
 
   it('#isExpire should return false for expired but refreshing item', () => {

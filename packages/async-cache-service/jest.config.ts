@@ -20,5 +20,6 @@ export default {
     '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
-  coverageDirectory: '../../coverage/packages/async-cache-service',
+  // https://github.com/nrwl/nx/issues/15752
+  // coverageDirectory: '../../coverage/packages/async-cache-service',
 };
