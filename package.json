@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "build": "nx run async-cache-service:build",
-    "test": "nx run async-cache-service:test"
+    "test": "nx run async-cache-service:test:ci"
   },
   "private": true,
   "dependencies": {
