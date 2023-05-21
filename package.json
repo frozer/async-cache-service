@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "nx run async-cache-service-build",
+    "build": "nx run async-cache-service:build",
     "test": "nx run async-cache-service:test"
   },
   "private": true,
