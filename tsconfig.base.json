@@ -15,7 +15,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "async-cache-service": ["packages/async-cache-service/src/index.ts"]
+      "@frozer/async-cache-service": ["packages/async-cache-service/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
