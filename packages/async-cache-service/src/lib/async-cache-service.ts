@@ -46,7 +46,9 @@ export class AsyncCacheService<T> {
 
     if (this.cache.get(key)?.isRefreshing) {
       return new Promise((resolve, reject) => {
-        this.subscriptionService.addSubscriber(key, [resolve, reject]);
+        if (resolve instanceof Function && reject instanceof Function) {
+          this.subscriptionService.addSubscriber(key, [resolve, reject]);
+        }
       })
     }
 
