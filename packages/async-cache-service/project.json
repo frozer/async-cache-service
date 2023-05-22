@@ -13,12 +13,12 @@
         "tsConfig": "packages/async-cache-service/tsconfig.lib.json",
         "assets": [
           {
-            "glob": "**/README.md",
+            "glob": "README.md",
             "input": "packages/async-cache-service/src/../../..",
             "output": ""
           },
           {
-            "glob": "**/LICENSE",
+            "glob": "LICENSE",
             "input": "packages/async-cache-service/src/../../..",
             "output": ""
           }
