@@ -1,10 +1,11 @@
 {
   "name": "async-cache-service",
-  "version": "0.9.0",
+  "version": "0.9.3",
   "type": "commonjs",
   "author": {
     "name": "Denis Morozov"
   },
+  "license": "MIT",
   "homepage": "https://github.com/frozer/async-cache-service",
   "description": "The asynchronous cache service is designed to handle the storage and retrieval of data in a non-blocking manner.",
   "repository": {
